@@ -1,0 +1,13 @@
+# Node / React
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+
+# Python / FastAPI
+backend/venv/
+backend/__pycache__/
+*.pyc
+
+# Secrets
+.env
+*.env
