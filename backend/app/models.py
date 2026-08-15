@@ -24,7 +24,7 @@ class DailyLog(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     date = Column(Date, nullable=False)
-    meal_type = Column(String(20), nullable=False) # Breakfast, Lunch, Dinner, Snack
+    meal_type = Column(String(20), nullable=False) # Breakfast, Lunch, Supper, Dinner
     food_name = Column(String(100), nullable=False)
     quantity = Column(Float, nullable=False)
     unit = Column(String(50), nullable=False) # grams, slice, large, etc.
