@@ -25,6 +25,45 @@
   table has no activity_level column yet — revisit if per-user accuracy matters later.
   models.py already had DailyLog model + user/logs relationship in place before this
   phase (not new work).
+
+---
+## [2026-08-13] - Phase 3: External API Wrappers (Suyash)
+- **Added:** app/services/nutrition_api.py, app/routers/food.py; FoodSearchResult,
+  FoodAnalyzeRequest, FoodAnalyzeResult schemas in schemas.py
+- **Changed:** main.py imports and mounts food.router. /food/search and
+  /food/analyze both require auth (Depends(security.get_current_user)), same
+  pattern as users.py.
+- **Notes for AI:** Strategy is USDA-first, Edamam-fallback. food_id is prefixed
+  ("usda:<fdcId>" / "edamam:<foodId>") so /food/analyze knows which provider to
+  hit — anything not starting with "usda:" routes straight to Edamam using
+  food_name (not strictly validated, but food_id always comes from
+  /food/search's own output in practice).
+
+  USDA specifics: search filters dataType to Foundation/SR Legacy/Survey
+  (FNDDS), excluding Branded, so results aren't drowned in packaged products.
+  A branded-only query correctly returns zero USDA results and falls to
+  Edamam. Calorie lookup checks nutrient IDs 1008/1062/2047/2048 in order
+  (Foundation Foods often use Atwater-factor IDs instead of the standard
+  1008), falling back to ID 1063 (kJ) with unit conversion if none present —
+  protein (1003) and fat (1004) IDs are consistent across data types, no
+  fallback needed there. USDA analyze only supports g/oz units (nutrients are
+  per-100g, no portion-unit conversion built). USDA's gateway occasionally
+  returns a transient nginx 400 on an otherwise-valid request — _search_usda()
+  retries once before giving up.
+
+  Edamam specifics: Food DB (search/parser) and Nutrition Analysis (analyze)
+  are SEPARATE Edamam applications with separate credential pairs, not
+  interchangeable. .env has EDAMAM_FOOD_DB_APP_ID/KEY and
+  EDAMAM_NUTRITION_APP_ID/KEY (not one shared pair). analyze_food() fallback
+  uses food_name + natural-language nutrition-data endpoint, not the Edamam
+  foodId directly — that's why FoodAnalyzeRequest requires food_name from the
+  frontend. Edamam's nutrition-data response has two possible shapes
+  (top-level totalNutrients/calories, or nested under
+  ingredients[0].parsed[0].nutrients) — both handled.
+
+  Both search_food() and analyze_food() print the real USDA failure reason
+  before falling back to Edamam — check the uvicorn console when debugging
+  unexpected fallback behavior.  
 <!-- 
 TEMPLATE FOR NEW ENTRIES:
 ## [YYYY-MM-DD] - Feature Name (Your Name)

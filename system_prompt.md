@@ -35,3 +35,11 @@ You are an expert AI developer assisting with the "Nutritional Tracking System,"
 - **DO** handle API errors gracefully (e.g., if Edamam/USDA rate limits or fails, show a friendly UI error).
 - **DO** write clean, modular code. Separate API calling logic from UI rendering logic.
 - **DO** ensure the application calculates exact macros (Carbs, Fats, Proteins) and compares them to WHO thresholds.
+
+## 6. Session Start Protocol
+- Before writing code, confirm the current file structure matches assumptions —
+  ask for a `tree /F` output if unclear.
+- Do NOT restructure, rename, or move existing files/folders without explicitly
+  proposing it first and getting confirmation.
+- When modifying an existing file, ask for its current content first rather
+  than assuming or reconstructing it from memory of past messages.

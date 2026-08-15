@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 from enum import Enum
+from typing import List
 
 class GenderEnum(str, Enum):
     male = "male"
@@ -22,6 +23,7 @@ class Token(BaseModel):
     token_type: str = "bearer"
 
 class UserOut(BaseModel):
+    # notice that passowrd not included so that it is not returned in the response
     id: int
     username: str
     age: int
@@ -37,3 +39,22 @@ class TargetsOut(BaseModel):
     protein_g: float
     carbs_g: float
     fat_g: float
+
+class FoodSearchResult(BaseModel):
+    food_id: str        # e.g. "usda:173944" or "edamam:food_abc123"
+    name: str
+    source: str          # "usda" or "edamam"
+    units: List[str]     # e.g. ["g", "oz"] or ["Gram", "Whole", "Large"]
+
+class FoodAnalyzeRequest(BaseModel):
+    food_id: str
+    food_name: str        # pass through the name from the search result
+    quantity: float = Field(..., gt=0)
+    unit: str
+
+class FoodAnalyzeResult(BaseModel):
+    calories: float
+    protein_g: float
+    carbs_g: float
+    fat_g: float
+    source: str
