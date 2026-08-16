@@ -64,6 +64,54 @@
   Both search_food() and analyze_food() print the real USDA failure reason
   before falling back to Edamam — check the uvicorn console when debugging
   unexpected fallback behavior.  
+
+---
+## [2026-08-15] - Phase 4: Daily Logging & Aggregation (Suyash)
+- **Added:** app/routers/logs.py (POST /logs/, DELETE /logs/{log_id}, GET
+  /logs/summary?date=YYYY-MM-DD); LogCreate, LogOut, DailySummaryOut,
+  MealTypeEnum, ActivityLevelEnum schemas in schemas.py.
+- **Changed:** main.py imports and mounts logs.router alongside
+  auth/users/food. GET /users/me/targets now takes an optional
+  activity_factor query param (ActivityLevelEnum: sedentary 1.2 / light
+  1.375 / moderate 1.55 / very_active 1.725 / extra_active 1.9, defaults
+  to light/1.375) — previously hardcoded in calculate_targets(). No
+  requirements.txt changes — logs.py only needed fastapi/sqlalchemy,
+  already present.
+- **Notes for AI:** No DB schema/migration needed — daily_logs already had
+  meal_type/quantity/unit/date columns from initial setup, and date is a
+  Date (not DateTime) column so /logs/summary filters with a direct
+  equality match, no truncation logic required. Fixed a stale inline
+  comment on DailyLog.meal_type (was "Breakfast, Lunch, Dinner, Snack",
+  now "Breakfast, Lunch, Supper, Dinner") to match the actual product
+  flow — meal_type itself is an unconstrained String(20) in the DB, but
+  LogCreate.meal_type is typed as MealTypeEnum so the API layer only
+  accepts those 4 exact values (422 on anything else).
+
+  Design decisions baked into this phase: logging quantity is grams-only
+  by design, no per-unit lookup table (e.g. "1 egg", "1 bowl") — frontend
+  converts to grams before calling /logs; for Edamam-sourced foods,
+  analyze_food() should be called with quantity templated as
+  "{quantity}g {food_name}" to keep the same grams-only contract instead
+  of relying on Edamam's natural-language quantity parsing. /logs/
+  (POST) does NOT call USDA/Edamam itself — it stores whatever
+  calories/protein_g/carbs_g/fat_g values it's given, so the intended
+  frontend flow is /food/analyze first, then POST those returned values
+  to /logs/. activity_factor is per-request only and never persisted
+  anywhere (not on the user, not per-log) — a till-date/cumulative
+  comparison feature was explicitly deferred in favor of "today only",
+  so this lack of persistence isn't a gap yet, but would need revisiting
+  if cumulative history is added later. Comparison of consumed-vs-ideal
+  is meant to be shown after every single log entry (not gated behind
+  logging all 4 meals) by having the frontend call /logs/summary and
+  /users/me/targets together after each POST /logs/.
+
+Tested via Swagger UI: register -> login -> targets with varying
+  activity_factor (confirmed calorie/macro numbers change) -> food/search
+  -> food/analyze -> POST /logs x3 (Lunch, Dinner, and a third entry) ->
+  GET /logs/summary (totals matched sum of entries correctly) -> DELETE
+  /logs/{id} on one entry -> GET /logs/summary again (deleted entry no
+  longer appeared, totals correctly recalculated to reflect only the
+  remaining entries). Full CRUD + aggregation loop verified working.
 <!-- 
 TEMPLATE FOR NEW ENTRIES:
 ## [YYYY-MM-DD] - Feature Name (Your Name)
