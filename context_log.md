@@ -112,6 +112,25 @@ Tested via Swagger UI: register -> login -> targets with varying
   /logs/{id} on one entry -> GET /logs/summary again (deleted entry no
   longer appeared, totals correctly recalculated to reflect only the
   remaining entries). Full CRUD + aggregation loop verified working.
+
+---
+## [2026-08-16] - Phase 5: OpenAPI Handoff (Suyash)
+- **Added:** openapi.json (exported from FastAPI's auto-generated schema at
+  /openapi.json) saved at project root for the frontend team to build against.
+- **Changed:** No route or logic changes — this phase was verification and
+  documentation handoff only.
+- **Notes for AI:** Full end-to-end flow re-verified via Swagger UI: register
+  -> login -> GET /users/me -> GET /users/me/targets with varying
+  activity_factor -> GET /food/search -> POST /food/analyze -> POST /logs/
+  -> GET /logs/summary -> DELETE /logs/{id} -> GET /logs/summary again. All
+  steps passed, including USDA/Edamam fallback behavior in nutrition_api.py.
+
+  Backend is feature-complete for the flow described in system_prompt.md:
+  register -> enter height/weight/gender -> get WHO/Mifflin-St Jeor targets
+  (with selectable activity_factor) -> log meals under 4 types
+  (Breakfast/Lunch/Supper/Dinner) with gram quantities -> view today's
+  consumed-vs-ideal via /logs/summary + /users/me/targets. Ready for
+  frontend team to build against openapi.json.
 <!-- 
 TEMPLATE FOR NEW ENTRIES:
 ## [YYYY-MM-DD] - Feature Name (Your Name)
