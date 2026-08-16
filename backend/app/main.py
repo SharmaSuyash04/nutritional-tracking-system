@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app import models
 from app.database import engine
-from app.routers import auth, users,food
+from app.routers import auth, users, food, logs
 
 # Creates tables in MySQL if they don't already exist
 # (your daily_logs and users tables already exist, so this is safe/no-op for them)
@@ -21,7 +21,8 @@ app.add_middleware(
 
 app.include_router(auth.router)
 app.include_router(users.router)
-app.include_router(food.router) 
+app.include_router(food.router)
+app.include_router(logs.router)
 
 @app.get("/")
 def read_root():

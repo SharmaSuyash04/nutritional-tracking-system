@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 from enum import Enum
-from typing import List
+from typing import List, Optional
+from datetime import date as date_type
 
 class GenderEnum(str, Enum):
     male = "male"
@@ -58,3 +59,54 @@ class FoodAnalyzeResult(BaseModel):
     carbs_g: float
     fat_g: float
     source: str
+
+
+class ActivityLevelEnum(float, Enum):
+    sedentary = 1.2
+    light = 1.375
+    moderate = 1.55
+    very_active = 1.725
+    extra_active = 1.9
+
+
+# ---- Phase 4: Daily Logging & Aggregation ----
+
+class MealTypeEnum(str, Enum):
+    breakfast = "Breakfast"
+    lunch = "Lunch"
+    supper = "Supper"
+    dinner = "Dinner"
+
+class LogCreate(BaseModel):
+    date: Optional[date_type] = None  # if omitted, backend defaults to today
+    meal_type: MealTypeEnum
+    food_name: str = Field(..., min_length=1, max_length=100)
+    quantity: float = Field(..., gt=0)     # always grams
+    unit: str = Field(default="g", max_length=50)
+    calories: float = Field(..., ge=0)
+    protein_g: float = Field(..., ge=0)
+    carbs_g: float = Field(..., ge=0)
+    fat_g: float = Field(..., ge=0)
+
+class LogOut(BaseModel):
+    id: int
+    date: date_type
+    meal_type: str
+    food_name: str
+    quantity: float
+    unit: str
+    calories: float
+    protein_g: float
+    carbs_g: float
+    fat_g: float
+
+    class Config:
+        from_attributes = True
+
+class DailySummaryOut(BaseModel):
+    date: date_type
+    total_calories: float
+    total_protein_g: float
+    total_carbs_g: float
+    total_fat_g: float
+    entries: List[LogOut]
